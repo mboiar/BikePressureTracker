@@ -18,6 +18,7 @@
 #define ADXL_CMD_SIZE 1U
 #define ADXL_MAX_ADDR 63U
 #define RECV_BUF_SIZE BUF_SIZE *ADXL_BYTES_PER_SAMPLE
+#define ADXL_REGISTER_SIZE 1U
 
 #define ADXL_RAW_MIN (-4095)
 #define ADXL_RAW_MAX (4095)
@@ -168,7 +169,7 @@ adxl_status_t adxl_init(const adxl_config_t *config)
   HAL_GPIO_WritePin(adxl.gpio_port, adxl.gpio_pin, GPIO_PIN_RESET);
 
   uint8_t device_id = 0;
-  if (adxl_read_reg(DEVID, &device_id, ADXL_SPI_CMD_TIMEOUT_MS) != ADXL_OK)
+  if (adxl_read_reg(DEVID, &device_id, ADXL_REGISTER_SIZE) != ADXL_OK)
     return ADXL_ERR;
 
   if (device_id != ADXL_DEVICE_ID)
@@ -238,7 +239,7 @@ adxl_status_t adxl_init(const adxl_config_t *config)
 adxl_status_t adxl_enable(void)
 {
   uint8_t reg;
-  if (adxl_read_reg(POWER_CTL, &reg, 1) != ADXL_OK)
+  if (adxl_read_reg(POWER_CTL, &reg, ADXL_REGISTER_SIZE) != ADXL_OK)
     return ADXL_ERR;
 
   reg &= ~ADXL_SLEEP_BIT;
@@ -267,7 +268,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 
   uint8_t fifo_status;
-  if (adxl_read_reg(FIFO_STATUS, &fifo_status, ADXL_SPI_CMD_TIMEOUT_MS) != ADXL_OK)
+  if (adxl_read_reg(FIFO_STATUS, &fifo_status, ADXL_REGISTER_SIZE) != ADXL_OK)
     return;
 
   uint8_t entries = fifo_status & FIFO_STATUS_SAMPLES_MASK;
