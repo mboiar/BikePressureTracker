@@ -36,6 +36,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/ADXL/ADXL.c
 )
 
 set(CMSISCORE ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS)
@@ -43,6 +44,7 @@ set(CMSIS_DSP_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS-DSP)
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/ADXL
 )
 
 # Add project symbols (macros)
