@@ -26,6 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "ADXL.h"
+#include "stdbool.h"
 
 /* USER CODE END Includes */
 
@@ -97,13 +99,32 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  const adxl_config_t adxl_config = {.range = ADXL_RANGE_16G,
+                               .resolution = ADXL_RESOLUTION_13BIT,
+                               .rate = ADXL_RATE_800,
+                               .spi_mode = ADXL_SPI_4WIRE,
+                               .spi_cs_port = SPI1_CS_GPIO_Port,
+                              .spi_cs_pin = SPI1_CS_Pin,
+                              .hspi = &hspi1,
+                              .htim = &htim2};
+
+  if (adxl_init(&adxl_config) != ADXL_OK)
+  {
+        Error_Handler();
+  }
+
+  if (adxl_enable() != ADXL_OK) {
+        Error_Handler();
+  }
+
   while (1)
   {
+    HAL_Delay(1);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
