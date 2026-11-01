@@ -37,6 +37,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/ADXL/ADXL.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/fft.c
 )
 
 set(CMSISCORE ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS)
@@ -45,7 +46,10 @@ set(CMSIS_DSP_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/CMSIS-DSP)
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Drivers/ADXL
+    ${CMSIS_DSP_DIR}/Include
 )
+
+add_subdirectory(${CMSIS_DSP_DIR}/Source ${CMAKE_CURRENT_BINARY_DIR}/cmsis_dsp_build)
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
@@ -59,5 +63,6 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+    CMSISDSP
     # Add user defined libraries
 )

@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ADXL.h"
+#include "fft.h"
 #include "stdbool.h"
 
 /* USER CODE END Includes */
@@ -103,26 +104,37 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  const fft_config_t config = {.freq_sampling = 800, .guard = 3, .min_bin = 3, .min_peak = 0.05f};
+  fft_init(&config);
+
   const adxl_config_t adxl_config = {.range = ADXL_RANGE_16G,
-                               .resolution = ADXL_RESOLUTION_13BIT,
-                               .rate = ADXL_RATE_800,
-                               .spi_mode = ADXL_SPI_4WIRE,
-                               .spi_cs_port = SPI1_CS_GPIO_Port,
-                              .spi_cs_pin = SPI1_CS_Pin,
-                              .hspi = &hspi1,
-                              .htim = &htim2};
+                                     .resolution = ADXL_RESOLUTION_13BIT,
+                                     .rate = ADXL_RATE_800,
+                                     .spi_mode = ADXL_SPI_4WIRE,
+                                     .spi_cs_port = SPI1_CS_GPIO_Port,
+                                     .spi_cs_pin = SPI1_CS_Pin,
+                                     .hspi = &hspi1,
+                                     .htim = &htim2};
 
   if (adxl_init(&adxl_config) != ADXL_OK)
   {
-        Error_Handler();
+    Error_Handler();
   }
 
-  if (adxl_enable() != ADXL_OK) {
-        Error_Handler();
+  if (adxl_enable() != ADXL_OK)
+  {
+    Error_Handler();
   }
 
   while (1)
   {
+
+    uint8_t *frame = adxl_acquire_frame();
+    if (frame != NULL)
+    {
+      fft_process_frame(frame);
+    }
+
     HAL_Delay(1);
 
     /* USER CODE END WHILE */
