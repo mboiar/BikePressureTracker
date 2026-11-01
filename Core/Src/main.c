@@ -28,6 +28,7 @@
 /* USER CODE BEGIN Includes */
 #include "ADXL.h"
 #include "fft.h"
+#include "logger.h"
 #include "stdbool.h"
 
 /* USER CODE END Includes */
@@ -126,13 +127,14 @@ int main(void)
     Error_Handler();
   }
 
+  fft_pkt_t* pkt;
+
   while (1)
   {
-
     uint8_t *frame = adxl_acquire_frame();
-    if (frame != NULL)
-    {
-      fft_process_frame(frame);
+    if (frame != NULL && !logger_is_busy()) {
+      fft_process_frame(frame, pkt);
+      logger_log_serial((uint8_t*)pkt, sizeof(fft_pkt_t));
     }
 
     HAL_Delay(1);

@@ -4,28 +4,19 @@
 #include "stdint.h"
 
 #define FFT_SIZE 4096U
-#define NPEAKS 8U
+#define FFT_MAGIC 0x31544646 /* 'F' 'F' 'T' '1' */
 
 typedef struct
 {
-    float f_hz;
-    float amp_g;
-} peak_t;
-
-typedef struct
-{
-    uint32_t frame;
-    uint16_t fs_hz;
-    uint16_t clip[ADXL_NUM_AXES];
     uint16_t npeaks;
     float min_peak;
     uint16_t guard;
     uint16_t min_bin;
-    peak_t peak[ADXL_NUM_AXES][NPEAKS];
     arm_rfft_fast_instance_f32 rfft;
     float32_t hann[FFT_SIZE], fft_in[FFT_SIZE], fft_out[FFT_SIZE];
     float32_t amp_scale;
     float mag[FFT_SIZE / 2];
+    fft_pkt_t pkt;
 } fft_t;
 
 static fft_t fft;
@@ -51,7 +42,7 @@ fft_status_t fft_init(const fft_config_t *config)
     }
 
     fft.amp_scale = 2.0f / sum; // single-sided amplitude, window-gain corrected
-    fft.fs_hz = config->freq_sampling;
+    fft.pkt.fs_hz = config->freq_sampling;
     fft.npeaks = NPEAKS;
     fft.guard = config->guard;
 
@@ -62,6 +53,8 @@ fft_status_t fft_init(const fft_config_t *config)
 
     fft.min_bin = config->min_bin;
     fft.min_peak = config->min_peak;
+
+    fft.pkt.magic = FFT_MAGIC;
 
     return FFT_OK;
 }
@@ -84,7 +77,7 @@ static void pick_peaks(float *m, peak_t *out)
         float a = m[idx - 1], c = m[idx + 1]; // parabolic interpolation
         float den = a - 2.0f * v + c;
         float d = (den != 0.0f) ? 0.5f * (a - c) / den : 0.0f;
-        out[k].f_hz = (idx + d) * (float)fft.fs_hz / FFT_SIZE;
+        out[k].f_hz = (idx + d) * (float)fft.pkt.fs_hz / FFT_SIZE;
         out[k].amp_g = v - 0.25f * (a - c) * d;
 
         for (int j = (int)idx - fft.guard; j <= (int)idx + fft.guard; j++)
@@ -93,9 +86,9 @@ static void pick_peaks(float *m, peak_t *out)
     }
 }
 
-void fft_process_frame(const uint8_t *frame)
+void fft_process_frame(const uint8_t *frame, fft_pkt_t *pkt)
 {
-    if (frame == NULL)
+    if (frame == NULL || pkt == NULL)
     {
         return;
     }
@@ -124,9 +117,12 @@ void fft_process_frame(const uint8_t *frame)
         arm_cmplx_mag_f32(fft.fft_out, fft.mag, FFT_SIZE / 2);
         arm_scale_f32(fft.mag, fft.amp_scale, fft.mag, FFT_SIZE / 2);
         fft.mag[0] = 0.0f;
-        pick_peaks(fft.mag, fft.peak[ax]);
+        pick_peaks(fft.mag, fft.pkt.peak[ax]);
 
-        fft.clip[ax] = clipped;
+        fft.pkt.clip[ax] = clipped;
     }
-    fft.frame++;
+
+    *pkt = fft.pkt;
+
+    fft.pkt.frame++;
 }
