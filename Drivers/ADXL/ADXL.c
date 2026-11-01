@@ -16,10 +16,11 @@
 #define ADXL_DEVICE_ID 0xE5
 #define ADXL_SPI_CMD_TIMEOUT_MS 10U
 #define ADXL_CMD_SIZE 1U
-#define ADXL_NUM_AXES 3U
 #define ADXL_MAX_ADDR 63U
-#define ADXL_BYTES_PER_SAMPLE 6U
 #define RECV_BUF_SIZE BUF_SIZE *ADXL_BYTES_PER_SAMPLE
+
+#define ADXL_RAW_MIN (-4095)
+#define ADXL_RAW_MAX (4095)
 
 #define ADXL_WRITE_CMD_BIT (~0x80U)
 #define ADXL_READ_CMD_BIT 0x80U
@@ -115,6 +116,41 @@ static adxl_status_t adxl_read_reg(uint8_t address, uint8_t *value, uint8_t size
 
   HAL_GPIO_WritePin(adxl.gpio_port, adxl.gpio_pin, GPIO_PIN_SET);
   return ADXL_OK;
+}
+
+bool adxl_is_clipped(int16_t v)
+{
+  return (v >= ADXL_RAW_MAX || v <= ADXL_RAW_MIN);
+}
+
+int16_t adxl_parse(const uint8_t *p)
+{
+  if (p == NULL)
+    return 0;
+
+  return (int16_t)(uint16_t)(p[0] | (p[1] << 8));
+}
+
+float adxl_get_scaled(int16_t v, uint8_t axis)
+{
+  if (axis >= ADXL_NUM_AXES)
+    return 0.0f;
+
+  return adxl.gain[axis] * v;
+}
+
+uint8_t *adxl_acquire_frame(void)
+{
+  int frame_ready = adxl.frame_ready;
+  if (frame_ready >= 0)
+  {
+    adxl.frame_ready = -1;
+    return adxl.buf[frame_ready];
+  }
+  else
+  {
+    return NULL;
+  }
 }
 
 adxl_status_t adxl_init(const adxl_config_t *config)
