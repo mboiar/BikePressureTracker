@@ -47,7 +47,7 @@ if __name__ == "__main__":
     rows = []
     prev = None
 
-    for f in parse(load_bytes('serial_20261107_152354.txt')):
+    for f in parse(load_bytes("python/data/serial_20261109_111657.txt")):
         gap = "" if prev is None or f["frame"] == prev + 1 else f"  (gap: {f['frame'] - prev - 1} missing)"
         prev = f["frame"]
         print(f"frame {f['frame']}  fs={f['fs']}  clip={f['clip']}{gap}")
@@ -88,5 +88,5 @@ if __name__ == "__main__":
     columns_order = ['frame', 'fs', 'clip_x', 'clip_y', 'clip_z', 'freq_x', 'freq_y', 'freq_z', 'amp_x', 'amp_y', 'amp_z']
     df = pd.DataFrame(rows, columns=columns_order)
     df=df.dropna(subset=['freq_x','freq_y','freq_z'],how='all')
-    df.to_csv('zestaw_nr_1.csv',index=None)
+    df.to_csv('python/data/zestaw_nr_1_11_16.csv',index=None)
 
