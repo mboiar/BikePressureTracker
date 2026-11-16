@@ -57,3 +57,5 @@ dkms.conf
 build
 .venv
 .vscode
+.data
+__pycache__/
