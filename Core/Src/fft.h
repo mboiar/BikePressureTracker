@@ -46,4 +46,6 @@ fft_status_t fft_init(const fft_config_t *config);
  */
 void fft_process_frame(const uint8_t *frame, fft_pkt_t *pkt);
 
+void fft_filter_turn(uint8_t *frame);
+
 #endif /* FFT_H */

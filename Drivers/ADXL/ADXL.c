@@ -1,6 +1,6 @@
 #include "ADXL.h"
 
-#define BUF_SIZE 4096U
+#define BUF_SIZE 2048U
 
 /* Analog Devices ADXL345 (Rev G.): Register map */
 #define DEVID 0x0

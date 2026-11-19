@@ -3,8 +3,9 @@
 #include "arm_math.h"
 #include "stdint.h"
 
-#define FFT_SIZE 4096U
+#define FFT_SIZE 2048U
 #define FFT_MAGIC 0x31544646 /* 'F' 'F' 'T' '1' */
+#define MAX_TILT_DEG 30.0f   /* Próg pochylenia w stopniach */
 
 typedef struct
 {
@@ -17,7 +18,7 @@ typedef struct
     float32_t amp_scale;
     float mag[FFT_SIZE / 2];
     fft_pkt_t pkt;
-} fft_t;
+} fft_t;    
 
 static fft_t fft;
 
@@ -125,4 +126,44 @@ void fft_process_frame(const uint8_t *frame, fft_pkt_t *pkt)
     *pkt = fft.pkt;
 
     fft.pkt.frame++;
+}
+
+
+void fft_filter_turn(uint8_t *frame)
+{
+    if (frame == NULL)
+    {
+        return;
+    }
+
+    float sum_x = 0.0f;
+    float sum_y = 0.0f;
+    float sum_z = 0.0f;
+
+    const uint8_t *p = frame;
+    for (uint32_t i = 0; i < FFT_SIZE; i++, p += ADXL_BYTES_PER_SAMPLE)
+    {
+        sum_x += adxl_get_scaled(adxl_parse(&p[0]), 0);
+        sum_y += adxl_get_scaled(adxl_parse(&p[2]), 1);
+        sum_z += adxl_get_scaled(adxl_parse(&p[4]), 2);
+    }
+
+    float mean_x = sum_x / (float)FFT_SIZE;
+    float mean_y = sum_y / (float)FFT_SIZE;
+    float mean_z = sum_z / (float)FFT_SIZE;
+
+    float horizontal_g = 0.0f;
+    arm_sqrt_f32(mean_y * mean_y + mean_z * mean_z, &horizontal_g);
+
+    float tilt_deg = atan2f(horizontal_g, fabsf(mean_x)) * (180.0f / PI);
+    bool banked_turn = (fabsf(mean_x) > 1.1f);
+
+    if (tilt_deg > MAX_TILT_DEG || banked_turn)
+    {
+        uint32_t total_bytes = FFT_SIZE * ADXL_BYTES_PER_SAMPLE;    
+        for (uint32_t i = 0; i < total_bytes; i++)
+        {
+            frame[i] = 0;
+        }
+    }
 }

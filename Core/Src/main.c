@@ -105,7 +105,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  const fft_config_t config = {.freq_sampling = 800, .guard = 3, .min_bin = 3, .min_peak = 0.05f};
+  const fft_config_t config = {.freq_sampling = 800, .guard = 1, .min_bin = 5, .min_peak = 0.05f};
   fft_init(&config);
 
   const adxl_config_t adxl_config = {.range = ADXL_RANGE_16G,
@@ -134,6 +134,7 @@ int main(void)
     if (!logger_is_busy()) {
       uint8_t *frame = adxl_acquire_frame();
       if (frame != NULL) {
+        fft_filter_turn(frame);
         fft_process_frame(frame, &pkt);
         logger_log_serial((uint8_t*)&pkt, sizeof(fft_pkt_t));
       }
